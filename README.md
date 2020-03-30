@@ -1,5 +1,11 @@
 # 아이템 14. Comparable 구현을 고려하라  
 
+> LottoNumber 가 Comparable 을 구현하였는데 getValue() 로 값을 꺼내올 필요가 있을까요? (https://github.com/next-step/java-lotto/pull/404#discussion_r399871346 참고)  
+
+Comparable을 구현했다는 것은 equals, hashCode 등을 오버라이딩하여 재구현했다는 말.  
+따라서 getValue를 통해 실제 값을 가져와 비교해줄 필요가 없다.  
+
+
 ## [Java Comparable.compareTo(T o) 문서](https://docs.oracle.com/javase/8/docs/api/java/lang/Comparable.html)에서 권고하는 사항
 
 ### 권고사항 4. ```(x.compareTo(y)==0) == (x.equals(y))```를 만족시키도록 구현해라.  
