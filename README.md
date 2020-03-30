@@ -10,41 +10,7 @@
 이 규칙을 위반하면 이상하고 예측할 수 없는 오류가 발생할 수 있다.  
 예를 들어, Java 5 에서는 PriorityQueue.remove() 메소드는 compareTo()에 의존했지만, Java 6 부터는 equals()에 의존했다.  
 
-* 잘못된 예 ([관련 이슈 참고](https://github.com/next-step/java-lotto/pull/404#discussion_r399760181))  
-```
-@Override
-public int compareTo(LottoNumber o) {
-    return Integer.compare(lottoNumber, o.getValue());
-}
-```
-* 다음과 같은 방식으로 구현할 수 있다.(http://www.javapractices.com/topic/TopicAction.do?Id=10의 다양한 방식들 참고)  
-```
-@Override public int compareTo(ArtGalleryVisit that) {
-    int result = COMPARATOR.compare(this, that);
-    //optional: you may want to include this assertion (at least during development)
-    //note that assertions are disabled by default
-    if (result == 0) {
-      assert this.equals(that) : 
-        this.getClass().getSimpleName() + ": compareTo inconsistent with equals."
-      ;
-    }
-    return result;
-  }  
-```
-다만 이 링크에 나온 예시들은 단지 assert 하는 방식으로 푸는 방법이다.  
-hashCode()와 equals()를 실제 구조에 맞게 다시 override함으로써 해결 가능할 것 같다.  
-
-* 나의 해결 방식  
-```
-    @Override
-    public int compareTo(LottoNumber o) {
-        if(o.equals(lottoNumber)) {
-            return 0;
-        }
-        return lottoNumber > o.getValue() ? 1 : -1;
-    }
-```
-
+따라서, compareTo를 오버라이딩 했을 때는, equals도 오버라이딩 해주어야 한다.  
 
 # 아이템 34. int 상수 대신 열거 타입을 사용해라  
 
