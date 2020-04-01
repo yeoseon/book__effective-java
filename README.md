@@ -343,7 +343,7 @@ https://github.com/next-step/java-lotto/pull/432#discussion_r400856453 참고
 
 #### Enum을 이용하여 Refactoring  
 
-``
+```
     private static final String MATCH_RESULT_INFORMATION = "%d개 일치 (%d원)- %d개";
     
     ...
