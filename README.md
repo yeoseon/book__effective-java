@@ -315,6 +315,53 @@ enum PayrollDay {
 **필요한 원소를 컴파일타임에 다 알 수 있는 상수 집합이라면 항상 열거 타입을 사용하자.**  
 **영원히 고정 불변일 필요도 없다.**  
 
+
+### 예제 1  
+
+https://github.com/next-step/java-lotto/pull/432#discussion_r400856453 참고  
+
+#### Refactoring 전  
+```
+    private static final String MATCH_FIRST_INFORMATION = "6개 일치 (2000000000원)- %s개";
+    private static final String MATCH_SECOND_INFORMATION = "5개 일치, 보너스 볼 일치(30000000원)- %s개";
+    private static final String MATCH_THIRD_INFORMATION = "5개 일치 (150000원)- %s개";
+    private static final String MATCH_FOURTH_INFORMATION = "4개 일치 (50000원)- %s개";
+    private static final String MATCH_FIFTH_INFORMATION = "3개 일치 (5000원)- %s개";
+    
+    ...
+    
+    public void showResult(LottoResult result, Money money) {
+    ViewUtils.printLine(WINNING_STATISTICS_INFORMATION);
+    ViewUtils.printLine(String.format(MATCH_FIFTH_INFORMATION, result.getTierCount(LottoTier.FIFTH)));
+    ViewUtils.printLine(String.format(MATCH_FOURTH_INFORMATION, result.getTierCount(LottoTier.FOURTH)));
+    ViewUtils.printLine(String.format(MATCH_THIRD_INFORMATION, result.getTierCount(LottoTier.THIRD)));
+    ViewUtils.printLine(String.format(MATCH_SECOND_INFORMATION, result.getTierCount(LottoTier.SECOND)));
+    ViewUtils.printLine(String.format(MATCH_FIRST_INFORMATION, result.getTierCount(LottoTier.FIRST)));
+    
+    printYield(result, money);
+```
+
+#### Enum을 이용하여 Refactoring  
+
+``
+    private static final String MATCH_RESULT_INFORMATION = "%d개 일치 (%d원)- %d개";
+    
+    ...
+
+    public void showResult(LottoResult result, Money money) {
+        ViewUtils.printLine(WINNING_STATISTICS_INFORMATION);
+
+        Arrays.stream(LottoTier.values())
+                .forEach(tier -> {
+                    int tierCount = result.getTierCount(tier);
+                    ViewUtils.printLine(String.format(MATCH_RESULT_INFORMATION, tier.getMatchedNumberCount(), tier.getPrize(), tierCount));
+                });
+
+        printYield(result, money);
+    }
+    
+```
+
 ### Reference  
 
 * [Enum과 가변인자](https://github.com/yeoseon/tip-archive/issues/144)  
