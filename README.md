@@ -1,9 +1,16 @@
 # 아이템 14. Comparable 구현을 고려하라  
+(Effective Java 내용 정리 필요)  
+
+## 관련 Refactoring 예시  
+
+### 예시 1  
 
 > LottoNumber 가 Comparable 을 구현하였는데 getValue() 로 값을 꺼내올 필요가 있을까요? (https://github.com/next-step/java-lotto/pull/404#discussion_r399871346 참고)  
 
 Comparable을 구현했다는 것은 equals, hashCode 등을 오버라이딩하여 재구현했다는 말.  
 따라서 getValue를 통해 실제 값을 가져와 비교해줄 필요가 없다.  
+
+### 예시 2
 
 > 객체지향의 핵심 중 하나인 **정보은닉**을 고려해보자. 원시값을 접근할 수 있다면, 외부에서 add와 같은 기능을 통해 원시값을 제어할 수 있는 위험이 생긴다. 따라서 getValue()를 통해 값을 가져오는 것을 지양하고, Comparable을 구현하여 객체로 소통할 수 있도록 사용하는 것이 좋다. 
 
