@@ -5,6 +5,11 @@
 Comparable을 구현했다는 것은 equals, hashCode 등을 오버라이딩하여 재구현했다는 말.  
 따라서 getValue를 통해 실제 값을 가져와 비교해줄 필요가 없다.  
 
+> 객체지향의 핵심 중 하나인 **정보은닉**을 고려해보자. 원시값을 접근할 수 있다면, 외부에서 add와 같은 기능을 통해 원시값을 제어할 수 있는 위험이 생긴다. 따라서 getValue()를 통해 값을 가져오는 것을 지양하고, Comparable을 구현하여 객체로 소통할 수 있도록 사용하는 것이 좋다. 
+
+관련 Comment  
+* https://github.com/next-step/java-bowling/pull/116#discussion_r409315783  
+* https://github.com/next-step/java-bowling/pull/135#discussion_r411826450  
 
 ## [Java Comparable.compareTo(T o) 문서](https://docs.oracle.com/javase/8/docs/api/java/lang/Comparable.html)에서 권고하는 사항
 
