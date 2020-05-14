@@ -140,7 +140,7 @@ private static long sum() {
 
     return sum;
 }
-
+```
 * 위의 소스코드가 정확한 답을 내기는 한다.  
 * sum 변수를 ```long```이 아닌 ```Long```으로 선언하는 바람에 불필요한 ```Long```인스턴스가 약 231개가 만들어진다.  
 
