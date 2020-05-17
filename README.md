@@ -754,3 +754,79 @@ https://github.com/next-step/java-lotto/pull/432#discussion_r400856453 참고
 ### Reference  
 
 * [Enum과 가변인자](https://github.com/yeoseon/tip-archive/issues/144)  
+
+# 아이템 72. 표준 예외를 사용하라.  
+
+자바 라이브러리는 대부분 API에서 쓰기에 충분한 수의 예외를 제공한다.  
+
+## 표준 예외를 재사용할 경우의 장점  
+
+* 다른 사람이 익히고 사용하기 쉬워진다.  
+* 내가 만든 API를 사용한 프로그램 역시 읽기 쉽게 된다.  
+* 예외 클래스 수가 적을 수록 메모리 사용량도 줄고 클래스를 적재하는 시간도 적게 걸린다.  
+
+## 많이 사용되는 예외  
+
+### ```IllegalArgumentException```  
+
+호출자가 인수로 부적절한 값을 넘길 때 던지는 예외.  
+(예) 반복 횟수를 지정하는 매개 변수에 음수를 건낼 때  
+
+### ```IllegalStateException```  
+
+대상 객체의 상태가 호출된 메서드를 수행하기에 적합하지 않을 때 던지는 예외.  
+(예) 초기화되지 않은 객체를 사용하려 할 때  
+
+### ```ConcurrentModificationException```  
+
+단일 스레드에서 사용하려고 설계한 객체를 여러 스레드가 동시에 수정하려 할 때 던지는 예외.
+동시 수정을 검출할 수 있는 방법이 없으니, 문제가 생길 가능성을 알려주는 정도의 용도로 쓰인다.  
+
+### ```UnsupportedOperationException```  
+
+클라이언트가 요청한 동작을 대상 객체가 지원하지 않을 때 던지를 예외.  
+대부분 객체는 자신이 정의한 메서드를 모두 지우너하므로, 흔히 쓰이는 예외는 아니다.  
+보통 구현하려는 인터페이스의 메서드 일부를 구현할 수 없을 때 사용한다.  
+(예) 원소를 넣을 수만 잇는 ```List``` 구현체에 대고 ```remove```를 호출할 때  
+
+## 특수한 경우
+
+뭉뚱 그려 ```IllegalArgumentException``` 이나 ```IllegalStateException```으로 던질 수 있지만,  
+특수한 일부는 따로 구분해 사용한다.  
+
+### ```NullPointerException```  
+
+관례상 메서드에 ```null```을 허용하지 않는데 건낸 경우 ```NullPointerException```을 던진다.  
+
+### ```IndexOutOfBoundsException```  
+
+어떤 시퀀스의 허용 범위를 넘는 값을 건낼 때  
+
+## ```Exception```, ```RuntimeException```, ```Throwable```, ```Error```는 직접 재사용하지 말자.  
+
+추상 클래스라고 여기자.  
+다른 예외들의 상위 클래스이므로, 안정적으로 테스트할 수 없다.  
+
+## 상황에 부합한다면 항상 표준 예외를 재사용하자.  
+
+위의 흔히 쓰이는 예 말고도 상황이 부합한다면 꼭 재사용하자.  
+(예) 복소수나 유리수를 다루는 객체를 작성하는 경우 ```ArithmeticException```이나 ```NumberFormatException```을 재사용할 수 있다.  
+
+이 때 **API 문서를 참고해 그 예외가 어떤 상황에서 던져지는지 꼭 확인해야 한다.**  
+예외의 이름뿐만 아니라 예외가 던져지는 맥락도 부합할 때만 사용한다.  
+
+## 표준 예외를 확장해도 좋다. 단..  
+
+단 예외는 직렬화할 수 있다는 사실을 기억하자.  
+직렬화에는 많은 부담이 따르니, 이 사실만으로도 나만의 예외를 새로 만들지 않는 방향으로 가는 것이 좋을 것이다.
+
+## ```IllegalArgumentException``` vs ```IllegalStateException``` ?  
+
+(예) 카드 덱을 표현하는 객체가 있고, 인수로 건낸 수 만큼의 카드를 뽑아 나눠주는 메서드를 제공한다고 하자.  
+이 때 덱에 남아 있는 카드 수보다 큰 값을 건넬 경우 어떤 예외를 던질까?  
+
+**인수의 값이 너무 크다고 본다면 ```IllegalArgumentException```을,  
+덱에 남은 카드 수가 너무 적다고 본다면 ```IllegalStateException```을 선택한다.**  
+
+**인수의 값이 무엇이었든 어차피 실패할 경우 ```IllegalStateException```,  
+그렇지 않으면 ```IllegalArgumentException```을 사용한다.**  
