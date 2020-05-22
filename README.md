@@ -765,6 +765,8 @@ https://github.com/next-step/java-lotto/pull/432#discussion_r400856453 참고
 
 * [Enum과 가변인자](https://github.com/yeoseon/tip-archive/issues/144)  
 
+# 아이템 50.적시에 방어적 복사본을 만들라.  
+
 # 아이템 72. 표준 예외를 사용하라.  
 
 자바 라이브러리는 대부분 API에서 쓰기에 충분한 수의 예외를 제공한다.  
