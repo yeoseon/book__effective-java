@@ -1,6 +1,7 @@
 # Items  
 
 * [아이템 01. 생성자 대신 정적 팩터리 메서드를 고려하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-01-%EC%83%9D%EC%84%B1%EC%9E%90-%EB%8C%80%EC%8B%A0-%EC%A0%95%EC%A0%81-%ED%8C%A9%ED%84%B0%EB%A6%AC-%EB%A9%94%EC%84%9C%EB%93%9C%EB%A5%BC-%EA%B3%A0%EB%A0%A4%ED%95%98%EB%9D%BC)  
+* [아이템 02. 생성자에 매개변수가 많다면 빌더를 고려하라]()
 * [아이템 04. 인스턴스화를 막으려거든 private 생성자를 사용하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-04-%EC%9D%B8%EC%8A%A4%ED%84%B4%EC%8A%A4%ED%99%94%EB%A5%BC-%EB%A7%89%EC%9C%BC%EB%A0%A4%EA%B1%B0%EB%93%A0-private-%EC%83%9D%EC%84%B1%EC%9E%90%EB%A5%BC-%EC%82%AC%EC%9A%A9%ED%95%98%EB%9D%BC)  
 * [아이템 06. 불필요한 객체 생성을 피하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-06-%EB%B6%88%ED%95%84%EC%9A%94%ED%95%9C-%EA%B0%9D%EC%B2%B4-%EC%83%9D%EC%84%B1%EC%9D%84-%ED%94%BC%ED%95%98%EB%9D%BC)  
 * [아이템 14. Comparable 구현을 고려하라](https://github.com/yeoseon/effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-14-comparable-%EA%B5%AC%ED%98%84%EC%9D%84-%EA%B3%A0%EB%A0%A4%ED%95%98%EB%9D%BC)  
@@ -91,6 +92,120 @@ javadoc이 아직은 처리해주지 못하고 있다.
 정적 팩터리 메서드와 public 생성자는 각자의 쓰임새가 있으니 상대적인 장단점을 이해하고 사용하는 것이 좋다.  
 하지만 정적 팩터리를 사용하는 것이 유리한 경우가 더 많으므로 무작정 public 생성자를 제공하던 습관이 있다면 고쳐보자.  
 
+# 아이템 02. 생성자에 매개변수가 많다면 빌더를 고려하라.  
+
+**객체의 선택적 매개변수가 많을 때, 빌더패턴을 이용하여 생성자를 만들자.**  
+
+## 기존 매개변수가 많을 때 해결 방법 : 점층적 생성자 패턴과 자바빈즈 패턴  
+
+### 점층적 생성자 패턴  
+* 필수 매개변수만 받는 생성자, 필수 + 선택1, 필수 + 선택 2 ...
+
+#### 단점  
+* 클라이언트 코드를 작성하거나 읽기 어렵다.  
+* 각 값의 의미가 무엇인지 헷갈린다.  
+* 매개변수를 실수로 잘못 넣어도, 런타임때 되서야 오류를 발견할 수 있다.  
+
+### 자바빈즈 패턴  
+* 매개변수가 없는 생성자로 만든 후 Setter 메서드를 호출해 값을 설정하는 방식  
+```aidl
+public class Sample {
+    private int a = -1; // 필수 : 기본값 없음
+    private int b = -1; // 필수 : 기본값 없음
+    private int c = 0; //선택값
+    private int d = 0;
+    
+    public Sample() {}
+    
+    public void setA(int a) {
+        thia.a = a;
+    }
+    ... //Setter 들 
+}
+```
+
+#### 단점  
+* Setter를 사용한다는 것 자체는 불변식을 깨지게 하기 때문에 매우 좋지 않다.  
+* 객체 하나를 만드려면 메서드를 여러개 호출해야 한다.  
+* 객체 하나가 완전히 생성되기 전까지는 일관성이 무너진 상태이다.  
+* Setter를 public으로 공개하고 있기 때문에 절대 불변 객체로 만들 수 없다.  
+
+## 빌더 패턴을 사용하여 해결하자!
+
+* 클라이언트는 필수 매개변수만으로 생성자 혹은 정적 팩터리를 호출해 빌더 객체를 얻는다. 
+* ㅇ빌더 객체가 제공하는 일종의 Setter 메서드로 원하는 선택 매개변수를 설정한다.  
+* 마지막으로 매개변수가 없는 build 메소드를 호출하여 객체를 얻는다.  
+
+### 예시  
+
+```
+public class Sample {
+    private final int a;
+    private final int b;
+    private final int c;
+    private final int d;
+    private final int e;
+    
+    public static class Builder {
+        //필수 매개 변수  
+        private final int a;
+        private final int b;
+        
+        //선택 매개변수는 초기화한다.
+        private int c = 0;
+        private int d = 0;
+        private int e = 0;
+        
+        public Builder(int a, int b) {
+            // 여기서 입력 매개변수를 첫번째로 유효성 검사하는 것이 좋다.  
+            this.a = a;
+            this.b = b;
+        }
+        
+        public Builder c(int val) {
+            c = val;
+            return this;
+        }
+        
+        public Builder d(int val) {
+            d = val;
+            return this;
+        }
+        
+        public Builder e(int val) {
+            e = val;
+            return this;
+        }
+        
+        public Sample build() {
+            return new Sample(this);
+        }
+    }
+    
+    private Sample(Builder builder) {
+        // 여기서 매개변수 불변식 검사를 한번 더 해주는 것이 좋다.  
+        a = builder.a;
+        b = builder.b;
+        c = builder.c;
+        d = builder.d;
+        e = builder.e;
+    }
+}
+```
+
+* Sample 클래스는  불변이다.  
+* 빌더의 Setter 메서드는 모두 Builder 자신을 반환하기 때문에, 연쇄적으로 호출 가능하다.  
+    ```
+    Sample sample = new Sample.Builder(1, 2)
+                              .c(3).d(4).e(5).build();
+    ```  
+* 매개변수를 검사할 때는 Builder 생성자 내부에서 한번 검사하고, Sample 생성자 내부에서 한번 더 불변을 검사하자.  
+
+### 단점  
+* 빌더 생성 비용이 크지는 않지만, 객체 하나를 작성하려면 Builder도 같이 작성해주어야 한다.  
+* 객체 만들기 위해 빌더 객체도 만들어 주어야 하므로 성능에 민감한 상황에서는 비용이 크지 않더라도 문제가 될 수 있다.  
+* 코드가 장황해서 매개변수가 4개 이상인 경우에 값어치를 한다.  
+  
 # 아이템 04. 인스턴스화를 막으려거든 private 생성자를 사용하라.  
 
 정적 메소드와 정적 필드만을 담은 클래스를 만들 때  
