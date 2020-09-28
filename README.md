@@ -209,6 +209,11 @@ public class Sample {
   
 # 아이템 03. private 생성자나 열거 타입으로 싱글턴임을 보장하라.  
 
+## 싱글턴의 예시  
+* 무상태 객체
+* 유일해야 하는 시스템 객체  
+* ... 
+
 ## 싱글턴으로 만드는 방법 1  
 ```aidl
 public class Sample {
