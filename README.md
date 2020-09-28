@@ -2,6 +2,7 @@
 
 * [아이템 01. 생성자 대신 정적 팩터리 메서드를 고려하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-01-%EC%83%9D%EC%84%B1%EC%9E%90-%EB%8C%80%EC%8B%A0-%EC%A0%95%EC%A0%81-%ED%8C%A9%ED%84%B0%EB%A6%AC-%EB%A9%94%EC%84%9C%EB%93%9C%EB%A5%BC-%EA%B3%A0%EB%A0%A4%ED%95%98%EB%9D%BC)  
 * [아이템 02. 생성자에 매개변수가 많다면 빌더를 고려하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-02-%EC%83%9D%EC%84%B1%EC%9E%90%EC%97%90-%EB%A7%A4%EA%B0%9C%EB%B3%80%EC%88%98%EA%B0%80-%EB%A7%8E%EB%8B%A4%EB%A9%B4-%EB%B9%8C%EB%8D%94%EB%A5%BC-%EA%B3%A0%EB%A0%A4%ED%95%98%EB%9D%BC)
+* [아이템 03. private 생성자나 열거 타입으로 싱글턴임을 보장하라.]()  
 * [아이템 04. 인스턴스화를 막으려거든 private 생성자를 사용하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-04-%EC%9D%B8%EC%8A%A4%ED%84%B4%EC%8A%A4%ED%99%94%EB%A5%BC-%EB%A7%89%EC%9C%BC%EB%A0%A4%EA%B1%B0%EB%93%A0-private-%EC%83%9D%EC%84%B1%EC%9E%90%EB%A5%BC-%EC%82%AC%EC%9A%A9%ED%95%98%EB%9D%BC)  
 * [아이템 06. 불필요한 객체 생성을 피하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-06-%EB%B6%88%ED%95%84%EC%9A%94%ED%95%9C-%EA%B0%9D%EC%B2%B4-%EC%83%9D%EC%84%B1%EC%9D%84-%ED%94%BC%ED%95%98%EB%9D%BC)  
 * [아이템 14. Comparable 구현을 고려하라](https://github.com/yeoseon/effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-14-comparable-%EA%B5%AC%ED%98%84%EC%9D%84-%EA%B3%A0%EB%A0%A4%ED%95%98%EB%9D%BC)  
@@ -206,6 +207,56 @@ public class Sample {
 * 객체 만들기 위해 빌더 객체도 만들어 주어야 하므로 성능에 민감한 상황에서는 비용이 크지 않더라도 문제가 될 수 있다.  
 * 코드가 장황해서 매개변수가 4개 이상인 경우에 값어치를 한다.  
   
+# 아이템 03. private 생성자나 열거 타입으로 싱글턴임을 보장하라.  
+
+## 싱글턴으로 만드는 방법 1  
+```aidl
+public class Sample {
+    public static final Sample INSTANCE = new Sample();
+    private Sample() {...}
+}
+```
+* public static 멤버를 final로 둔다.  
+* private 생성자는 Sample.INSTANCE를 초기화할 때 딱 한번만 호출된다.  
+* 리플렉션 API(AccessibleObject.setAccessible)을 사용해 권한이 있다면 private 생성자를 호출할 수 있는 예외는 있다.  
+    * 이를 방어하기 위해, 생성자에 2번째 객체가 생기려 할 때 예외를 던지도록 처리해준다.  
+### 장점  
+* 해당 클래스가 싱글턴임이 API를 보고 명백히 알 수 있다.  
+* 간결하다.  
+
+## 싱글턴으로 만드는 방법 2  
+```aidl
+public class Sample {
+    private static final Sample INSTANCE = new Sample();
+    private Sample() { ... }
+    public static Sample getInstance(){ return INSTANCE;}
+}
+```
+* 정적팩터리 메서드를 public static으로 제공한다.  
+* 첫번째 방법에서 발생하는 예외는 역시 발생한다. 
+
+### 장점  
+* 싱글턴이 아니게 바꾸고 싶다면, API를 바꾸지 않고도 변경할 수 있다.   
+    * 스레드별로 다른 인스턴스를 넘겨주게 처리할 수 있다.  
+* 정적 팩터리를 제네릭 싱글턴 팩터리로 만들 수 있다. (아이템 30 참고)  
+* 정적 팩터리의 메서드 참조를 공급자로 사용할 수 있다.  
+-> 이 장점이 필요하지 않다면 1번 방법을 사용하자.  
+
+**1번과 2번 방식은 직렬화된 인스턴스를 역직렬화 할 때, 새로운 인스턴스가 만들어진다.**  
+**이를 방지하기 위해 readResolve 메서드를 구현해주어야 한다.**  
+
+## 싱글턴으로 만드는 방법 3 : 열거 타입(enum) 이용  
+
+```aidl
+public enum Sample {
+    INSTANCE;
+}
+```
+* public 필드 방식과 비슷하지만, 더 간결하고 추가 노력 없이 직렬화 할 수 있다.  
+* 아주 복잡한 직렬화 상황이나 리플렉션 공격에서도 제 2의 인스턴스가 절대 생기지 않는다.  
+* 대부분의 상황에서는 원소가 하나뿐인 열거타입이 싱글턴을 만드는 가장 좋은 방법이다.  
+* 단, 만들려는 싱글턴이 Enum 외의 클래스를 상속해야 한다면 사용할 수 없다.  
+
 # 아이템 04. 인스턴스화를 막으려거든 private 생성자를 사용하라.  
 
 정적 메소드와 정적 필드만을 담은 클래스를 만들 때  
