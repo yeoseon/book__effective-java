@@ -4,6 +4,7 @@
 * [아이템 02. 생성자에 매개변수가 많다면 빌더를 고려하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-02-%EC%83%9D%EC%84%B1%EC%9E%90%EC%97%90-%EB%A7%A4%EA%B0%9C%EB%B3%80%EC%88%98%EA%B0%80-%EB%A7%8E%EB%8B%A4%EB%A9%B4-%EB%B9%8C%EB%8D%94%EB%A5%BC-%EA%B3%A0%EB%A0%A4%ED%95%98%EB%9D%BC)
 * [아이템 03. private 생성자나 열거 타입으로 싱글턴임을 보장하라.](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-03-private-%EC%83%9D%EC%84%B1%EC%9E%90%EB%82%98-%EC%97%B4%EA%B1%B0-%ED%83%80%EC%9E%85%EC%9C%BC%EB%A1%9C-%EC%8B%B1%EA%B8%80%ED%84%B4%EC%9E%84%EC%9D%84-%EB%B3%B4%EC%9E%A5%ED%95%98%EB%9D%BC)  
 * [아이템 04. 인스턴스화를 막으려거든 private 생성자를 사용하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-04-%EC%9D%B8%EC%8A%A4%ED%84%B4%EC%8A%A4%ED%99%94%EB%A5%BC-%EB%A7%89%EC%9C%BC%EB%A0%A4%EA%B1%B0%EB%93%A0-private-%EC%83%9D%EC%84%B1%EC%9E%90%EB%A5%BC-%EC%82%AC%EC%9A%A9%ED%95%98%EB%9D%BC)  
+* [아이템 05. 자원을 직접 명시하지 말고 의존 객체 주입을 사용하라]()
 * [아이템 06. 불필요한 객체 생성을 피하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-06-%EB%B6%88%ED%95%84%EC%9A%94%ED%95%9C-%EA%B0%9D%EC%B2%B4-%EC%83%9D%EC%84%B1%EC%9D%84-%ED%94%BC%ED%95%98%EB%9D%BC)  
 * [아이템 14. Comparable 구현을 고려하라](https://github.com/yeoseon/effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-14-comparable-%EA%B5%AC%ED%98%84%EC%9D%84-%EA%B3%A0%EB%A0%A4%ED%95%98%EB%9D%BC)  
 * [아이템 17. 변경 가능성을 최소화하라.](https://github.com/yeoseon/book__effective-java/blob/master/README.md#%EC%95%84%EC%9D%B4%ED%85%9C-17-%EB%B3%80%EA%B2%BD-%EA%B0%80%EB%8A%A5%EC%84%B1%EC%9D%84-%EC%B5%9C%EC%86%8C%ED%99%94%ED%95%98%EB%9D%BC)  
@@ -294,6 +295,62 @@ public class UtilityClass {
 * 생성자가 존재하는데 호출할 수 없는 구조이므로 적절한 주석을 통해 동료들에게 설명할 수 있도록 해주자.  
 * 상속 또한 불가능하게 된다.  
     * 모든 생성자는 무조건 상위 클래스의 생성자를 호출하게 되므로 private으로 선언되어 있으면 호출하지 못하여 상속이 불가능 하다.  
+
+# 아이템 05. 자원을 직접 명시하지 말고 의존 객체 주입을 사용하라  
+
+## 잘못된 예 : 정적 유틸리티 
+```
+public class SpellChecker {
+    private static final Lexicon dictionary = ...;
+    
+    private SpellChecker() {}   //객체 생성 방지 
+    
+    public static boolean isValie(...){....}
+    public static ...
+}
+```
+
+* 외부 의존성이 있는데 (Lexicon): 이를 정적으로 구현함  
+
+## 잘못된 예 : 싱글턴 사용  
+```aidl
+public class SpellChecker {
+    private final Lexicon dictionary = ...;
+    
+    private SpecllCheck(...){}
+    public static SpellChecker INSTANCE = new SpellChecker(...);
+    
+    public boolean isValie(...){...}
+    public ...
+}
+```
+* 외부 의존성이 있는데 싱글턴으로 구현함
+
+**두 방식 모두 사전을 단 하나만 사용한다고 가정한다는 점에서 훌륭하지 않다.**  
+**사전이 언어별로 따로 있고, 특수 어휘용 사전을 별도로 두기도 한다면..**  
+
+## SpellChecker가 여러 사전을 사용할 수 있도록  
+
+* final 한정자를 제거하고, 다른 사전으로 교체하는 메소드를 두는 방식도 좋지만, 멀티쓰레드 환경에서는 쓸 수 없다.  
+* 사용하는 자원에 따라 동작이 달라지는 클래스에는 정적 유틸리티나 싱글턴이 적합하지 않다.  
+* 클라이언트가 원하는 자원을 사용해야 한다.  
+
+```aidl
+public class SpellChecker {
+    private final Lexicon dictionary;
+    
+    public SpellChecker(Lexicon dictionary) {
+        this.dictionary = Object.requireNonNull(dictionary);    
+    }
+    ...
+}
+```  
+* 인스턴스를 생성할 때, 생성자에 필요한 자원을 넘겨쥬는 방식  
+* 생성자, 정적팩터리, 빌더 모두에 똑같이 응용할 수 있다.  
+* 생성자에 자원 팩터리를 넘겨주는 방식  
+    * 호출할 때마다, 특정 타입의 인스턴스를 반복해서 만들어주는 객체 
+    * Supplier<T>를 이용해 자신이 명시한 타입의 하위 타입이라면 무엇이든 생성할 수 있는 팩터리를 넘길 수 있다.  
+* 의존성이 많아지면 관리하기 골치아프다. 그래서 Spring Framework 같은 의존성 관리 기능을 가진 프레임워크를 사용하는 것  
 
 # 아이템 06. 불필요한 객체 생성을 피하라  
 
