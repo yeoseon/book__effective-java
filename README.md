@@ -7,6 +7,7 @@
 * [아이템 05. 자원을 직접 명시하지 말고 의존 객체 주입을 사용하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-05-%EC%9E%90%EC%9B%90%EC%9D%84-%EC%A7%81%EC%A0%91-%EB%AA%85%EC%8B%9C%ED%95%98%EC%A7%80-%EB%A7%90%EA%B3%A0-%EC%9D%98%EC%A1%B4-%EA%B0%9D%EC%B2%B4-%EC%A3%BC%EC%9E%85%EC%9D%84-%EC%82%AC%EC%9A%A9%ED%95%98%EB%9D%BC)
 * [아이템 06. 불필요한 객체 생성을 피하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-06-%EB%B6%88%ED%95%84%EC%9A%94%ED%95%9C-%EA%B0%9D%EC%B2%B4-%EC%83%9D%EC%84%B1%EC%9D%84-%ED%94%BC%ED%95%98%EB%9D%BC)  
 * [아이템 07. 다 쓴 객체 참조를 해제하라]()  
+* [아이템 08. finalizer 와 cleaner 사용을 피하라]()    
 * [아이템 14. Comparable 구현을 고려하라](https://github.com/yeoseon/effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-14-comparable-%EA%B5%AC%ED%98%84%EC%9D%84-%EA%B3%A0%EB%A0%A4%ED%95%98%EB%9D%BC)  
 * [아이템 17. 변경 가능성을 최소화하라.](https://github.com/yeoseon/book__effective-java/blob/master/README.md#%EC%95%84%EC%9D%B4%ED%85%9C-17-%EB%B3%80%EA%B2%BD-%EA%B0%80%EB%8A%A5%EC%84%B1%EC%9D%84-%EC%B5%9C%EC%86%8C%ED%99%94%ED%95%98%EB%9D%BC)  
 * [아이템 34. int 상수 대신 열거 타입을 사용해라](https://github.com/yeoseon/effective-java#int-%EC%83%81%EC%88%98-%EB%8C%80%EC%8B%A0-%EC%97%B4%EA%B1%B0-%ED%83%80%EC%9E%85%EC%9D%84-%EC%82%AC%EC%9A%A9%ED%95%B4%EB%9D%BC)  
@@ -529,9 +530,61 @@ public class ClassWeakHashMap {
 * root set에 대한 직접 참조가 아닌 객체에서의 참조를 가지고 있다.  
 * weak reference를 이용해 리스너와 콜백을 사용하는 것이 좋다.  
 
+# 아이템 08. finalizer 와 cleaner 사용을 피하라  
 
+## Java 에서는 두 가지 객체 소멸자를 제공한다. (finalizer와 cleaner)  
 
+C++에서 제공하는 파괴자의 개념은 Java의 GC가 해주는 것이라 Java의 소멸자와는 다른 개념임에 주의하자.  
 
+## finalizer와 cleaner의 문제점  
+
+### 1. 즉시 수행된다는 보장이 없다.  
+따라서 제때 실행되어야 하는 작업은 절대 할 수 없다.  
+전적으로 GC 알고리즘에 달렸기에 천차만별이다.  
+cleaner는 finalizer에 비해 스레드를 제어할 수 있다는 점에서 조금 낫지만, 여전히 보장할 수 없다.  
+사용하지 않는 것이 예방책이다.  
+
+### 2. 수행 시점뿐만 아니라 수행 여부조차 보장하지 않는다.  
+
+종료 작업을 전혀 수행하지 않고 프로그램이 중단될 수도 있다.  
+상태를 영구적으로 수정하는 작업에서는 절대 이 둘에 의존해서는 안된다.  
+System.gc, System.runFinalization 메서드 등에서 제때 실행될 가능 성을 높혀줄 순 있지만, 이 또한 보장되지 않는다.  
+사용하지 말자.  
+
+### 3. finalizer 동작 중 발생한 예외는 무시된다.  
+경고조차 출력하지 않고 작업이 남았더라도 그 순간 종료된다.  
+
+### 4. 성능 문제가 동반된다.  
+
+### 5. finalizer의 경우, finalizer 공격에 노출되어 보안 위험성이 높다.  
+
+생성자나 직렬화 과정에서 예외가 발생하여 만들다 만 객체에서 악의적인 하위 클래스의 finalizer가 수행될 수 있게 된다.  
+객체 생성을 막으려면 생성자에서 예외를 던지는 것만으로 충분하지만, finalizer가 있다면 그렇지도 않다. 
+final 클래스는 그 누구도 하위 클래스를 만들 수 없으니 안전하다.  
+final 클래스가 아닌 클래스를 방어하기 위해서는 아무 일도 하지 않는 finalize 메서드를 만들고, final로 선언하자.  
+
+## finalizer, cleaner를 대신해줄 묘안 : AutoCloseable  
+
+AutoCloseable을 구현해주고, 클라이언트에서 직접 객체를 다 쓰고 나면 close를 호출해준다.  
+추가적으로 각 인스턴스는 자신이 닫혔는지를 추적하는 메소드를 하나 더 만들어 검증하는 것이 좋다.  
+필드를 검사해서 객체가 닫힌 후에 불렸다면 IllegalStateException을 던지는 것이다.  
+
+## 그럼 finalizer와 cleaner는 도데체 왜 쓰는건가?  
+
+1. 자원의 소유자가 close 메서드를 호출하지 않는 경우에 대비한 안전망  
+즉시, 그리고 호출되리라는 보장 자체는 없지만, 만약에 하게된다면 늦게라도 해주는 것이 도움이 되기 때문이다.  
+
+2. 네이티브 피어와 연결된 객체  
+일반 자바 객체가 네이티브 메서드를 통해 기능을 위임한 네이티브 객체를 말한다.  
+자가 객체가 아니니, GC는 이 존재를 알지 못한다.  
+따라서 자바 피어를 회수할 때, 네이티브 객체까지 회수하지 못한다. 이때 사용하면 좋다.  
+하지만 성능 저하가 심하기 때문에, 성능 저하를 감ㅈ당할 수 있고, 네이티브 피어가 심각한 자원을 가지고 있지 않을 때에만 (즉시 회수하지 않아도 될 때) 사용해야 한다.  
+즉시 회수해야 한다면 앞서 설명한 close 메서드를 사용해야 한다.  
+
+## 결론  
+cleaner(자바 8까지는 finalizer)는 안전망 역할이지만 중요하지 않는 네이티브 자원 회수용으로만 사용하자.  
+하지만 이때도 회수 여부에 대한 확신이 없고, 성능 저하에 주의해야 한다.  
+ 
 # 아이템 14. Comparable 구현을 고려하라  
 (Effective Java 내용 정리 필요)  
 
