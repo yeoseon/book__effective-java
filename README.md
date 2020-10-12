@@ -6,6 +6,7 @@
 * [아이템 04. 인스턴스화를 막으려거든 private 생성자를 사용하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-04-%EC%9D%B8%EC%8A%A4%ED%84%B4%EC%8A%A4%ED%99%94%EB%A5%BC-%EB%A7%89%EC%9C%BC%EB%A0%A4%EA%B1%B0%EB%93%A0-private-%EC%83%9D%EC%84%B1%EC%9E%90%EB%A5%BC-%EC%82%AC%EC%9A%A9%ED%95%98%EB%9D%BC)  
 * [아이템 05. 자원을 직접 명시하지 말고 의존 객체 주입을 사용하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-05-%EC%9E%90%EC%9B%90%EC%9D%84-%EC%A7%81%EC%A0%91-%EB%AA%85%EC%8B%9C%ED%95%98%EC%A7%80-%EB%A7%90%EA%B3%A0-%EC%9D%98%EC%A1%B4-%EA%B0%9D%EC%B2%B4-%EC%A3%BC%EC%9E%85%EC%9D%84-%EC%82%AC%EC%9A%A9%ED%95%98%EB%9D%BC)
 * [아이템 06. 불필요한 객체 생성을 피하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-06-%EB%B6%88%ED%95%84%EC%9A%94%ED%95%9C-%EA%B0%9D%EC%B2%B4-%EC%83%9D%EC%84%B1%EC%9D%84-%ED%94%BC%ED%95%98%EB%9D%BC)  
+* [아이템 07. 다 쓴 객체 참조를 해제하라]()  
 * [아이템 14. Comparable 구현을 고려하라](https://github.com/yeoseon/effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-14-comparable-%EA%B5%AC%ED%98%84%EC%9D%84-%EA%B3%A0%EB%A0%A4%ED%95%98%EB%9D%BC)  
 * [아이템 17. 변경 가능성을 최소화하라.](https://github.com/yeoseon/book__effective-java/blob/master/README.md#%EC%95%84%EC%9D%B4%ED%85%9C-17-%EB%B3%80%EA%B2%BD-%EA%B0%80%EB%8A%A5%EC%84%B1%EC%9D%84-%EC%B5%9C%EC%86%8C%ED%99%94%ED%95%98%EB%9D%BC)  
 * [아이템 34. int 상수 대신 열거 타입을 사용해라](https://github.com/yeoseon/effective-java#int-%EC%83%81%EC%88%98-%EB%8C%80%EC%8B%A0-%EC%97%B4%EA%B1%B0-%ED%83%80%EC%9E%85%EC%9D%84-%EC%82%AC%EC%9A%A9%ED%95%B4%EB%9D%BC)  
@@ -426,6 +427,109 @@ private static long sum() {
 방어적 복사와는 대조적이다.  
 방어적 복사가 필요한 상황에서 객체를 재사용했을 때의 피해가, 필요없는 객체를 반복 생성했을 때의 피해보다 훨씬 크다는 사실을 기억하자.  
 불필요한 객체생성은 그저 코드 형태와 성능에만 영향을 준다.  
+
+# 아이템 07. 다 쓴 객체 참조를 해제하라  
+
+Java는 가비지 컬렉션을 지원하기에, 메모리 관리가 타 언어보다는 쉽지만 아예 신경을 안써도 되는 것은 아니다.  
+
+다 쓴 객체에 대한 참조를 해제하지 않으면 가비지 컬렉션의 대상이 되지 않아, 메모리 누수 현상이 일어날 수 있다.  
+
+## 가비지컬렉션의 대상이 되기 위한 조건  
+
+### 1. 직접 할당을 해제한다.  
+
+* 객체 참조 변수를 null로 초기화하는 방법이다.  
+* 어떠한 참조도 가지지 않기 때문에, 가비지 컬렉션의 대상이 된다.  
+* 소스코드가 지저분해질 우려가 있어 바람직한 방법은 아니기에 예외적인 경우에만 사용하는 것이 좋다.  
+* 클래스 내에서 메모리를 직접 관리하는 객체라면 이 방법을 통해 관리하는 것이 좋다.  
+
+### 2. Scope 밖으로 밀어내기  
+
+* 가장 좋은 방법이다.  
+* 변수의 범위를 최소가 되게 정의했다면, 이 일은 자연스럽게 이루어 진다.  
+
+## 메모리 누수를 일으키는 주범  
+
+### 1. 위에서 설명한 class 내에서 참조를 직접 관리하는 객체 (ex. 스택)  
+### 2. Map과 같은 캐시  
+
+Map과 같은 캐시에 객체 참조를 넣어두고, 초기화를 안시켜주는 경우 메모리 누수가 발생한다.  
+엔트리가 살아있는 동안만 캐시를 사용하려면 WeakHashMap을 사용한다. 단, 이 경우에만 사용한다.  
+
+### Java Reference  
+
+1. Strong Reference  
+    * 우리가 흔히 사용하는 Reference  
+    * String str = new String("abc")와 같은 형태이다.  
+    * GC의 대상이 되지 않는다.  
+    * null 초기화 방법으로 해제 해주어야 한다.  
+2. Soft Reference  
+    * SoftReference<Class> ref = new SoftReference<>(new String("abc")); 와 같은 형태로 사용  
+    * 대부분 GC의 대상이 아니지만, out of memory 에러가 날 위험이 있을 경우 GC 대상이 된다.  
+3. Weak Reference  
+    * WeakReference<Class> ref = new WeakReference<Class>(new String("abc")); 와 같은 형태로 사용된다.  
+    * 항상 GC의 대상이 된다.  
+4. Phantomly Reference  
+    * finalize 되었지만, 메모리가 아직 회수되지 않은 객체  
+   
+### WeakHashMap 예제  
+
+```aidl
+public class ClassWeakHashMap {
+    public static class Referred {
+        protected void finalize() {
+            System.out.println("Good bye cruel world");
+        }
+    }
+
+    /**
+    * GC를 발생 시켜 메모리를 회수하는 코드
+    * System.gc()가 잘 동작할지는 모르겠다.
+    */
+    public static void collect() throws InterruptedException {
+        System.out.println("Suggesting collection");
+        System.gc();
+        System.out.println("Sleeping");
+        Thread.sleep(5000);
+    }
+
+    public static void main(String args[]) throws InterruptedException {
+        System.out.println("Creating weak references");
+
+        // This is now a weak reference. 
+        // The object will be collected only if no strong references. 
+        Referred strong = new Referred(); //Strong Reference로 하나 추가
+
+        //Weak Reference를 이용한 WeakHashMap에 엔트리를 추가하여
+        //Weak Reference 추가
+        Map<Referred, String> metadata = new WeakHashMap<Referred, String>();
+        metadata.put(strong, "WeakHashMap's make my world go around");
+
+        // Attempt to claim a suggested reference. 
+        ClassWeakHashMap.collect();
+        //여기서는 gc가 발생해도 GC대상이 아니게 된다.
+        //strong이라는 변수를 통해 Strong Reference를 가지므로 GC 대상이 아니다.
+        System.out.println("Still has metadata entry? " + (metadata.size() == 1));
+        System.out.println("Removing reference");
+
+        // The object may be collected. 
+        //Strong Reference를 끊었다.
+        strong = null;
+
+        //여기서는 Weak Reference만 남아 있기 때문에 GC대상이 된다.
+        ClassWeakHashMap.collect();
+        System.out.println("Still has metadata entry? " + (metadata.size() == 1));
+        System.out.println("Done");
+    }
+}
+```  
+
+### 3. 리스너 또는 콜백  
+
+* root set에 대한 직접 참조가 아닌 객체에서의 참조를 가지고 있다.  
+* weak reference를 이용해 리스너와 콜백을 사용하는 것이 좋다.  
+
+
 
 
 # 아이템 14. Comparable 구현을 고려하라  
