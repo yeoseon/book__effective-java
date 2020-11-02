@@ -8,6 +8,7 @@
 * [아이템 06. 불필요한 객체 생성을 피하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-06-%EB%B6%88%ED%95%84%EC%9A%94%ED%95%9C-%EA%B0%9D%EC%B2%B4-%EC%83%9D%EC%84%B1%EC%9D%84-%ED%94%BC%ED%95%98%EB%9D%BC)  
 * [아이템 07. 다 쓴 객체 참조를 해제하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-07-%EB%8B%A4-%EC%93%B4-%EA%B0%9D%EC%B2%B4-%EC%B0%B8%EC%A1%B0%EB%A5%BC-%ED%95%B4%EC%A0%9C%ED%95%98%EB%9D%BC)  
 * [아이템 08. finalizer 와 cleaner 사용을 피하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-08-finalizer-%EC%99%80-cleaner-%EC%82%AC%EC%9A%A9%EC%9D%84-%ED%94%BC%ED%95%98%EB%9D%BC)    
+* [아이템 09. try-finally 보다는 try-with-resources를 사용하라]
 * [아이템 14. Comparable 구현을 고려하라](https://github.com/yeoseon/effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-14-comparable-%EA%B5%AC%ED%98%84%EC%9D%84-%EA%B3%A0%EB%A0%A4%ED%95%98%EB%9D%BC)  
 * [아이템 17. 변경 가능성을 최소화하라.](https://github.com/yeoseon/book__effective-java/blob/master/README.md#%EC%95%84%EC%9D%B4%ED%85%9C-17-%EB%B3%80%EA%B2%BD-%EA%B0%80%EB%8A%A5%EC%84%B1%EC%9D%84-%EC%B5%9C%EC%86%8C%ED%99%94%ED%95%98%EB%9D%BC)  
 * [아이템 34. int 상수 대신 열거 타입을 사용해라](https://github.com/yeoseon/effective-java#int-%EC%83%81%EC%88%98-%EB%8C%80%EC%8B%A0-%EC%97%B4%EA%B1%B0-%ED%83%80%EC%9E%85%EC%9D%84-%EC%82%AC%EC%9A%A9%ED%95%B4%EB%9D%BC)  
@@ -585,6 +586,44 @@ AutoCloseable을 구현해주고, 클라이언트에서 직접 객체를 다 쓰
 cleaner(자바 8까지는 finalizer)는 안전망 역할이지만 중요하지 않는 네이티브 자원 회수용으로만 사용하자.  
 하지만 이때도 회수 여부에 대한 확신이 없고, 성능 저하에 주의해야 한다.  
  
+# 아이템 09. try-finally 보다는 try-with-resources를 사용하라  
+
+## `close()` 를 이용해 직접 닫아줘야 하는 자원들  
+* InputStream, OutputStream, java.sql.Connection 등등 ...  
+* finalizer를 활용하지만 사용을 권장하지 않는다. (아이템 08 참고) 
+
+## try-finalizer  
+* 간단해 보이지만, 회수가 필요한 자원을 2개 이상 쓸 경우 코드가 복잡해진다.  
+* 또한 중첩으로 작성되기 때문에 제대로 된 예외처리가 되지 않을 가능성이 높다.  
+
+## 자바 7이 투척한 try-with-resources  
+
+* 예외 없이 무조건 이 것을 사용하자.  
+* close 메서드 하나만 덩그러니 정의한 인터페이스인 AutoCloseable을 구현하고 있다.  
+* 내가 직접 회수해야 하는 크래스를 개발한다면, AutoCloseable을 반드시 구현하자.  
+
+### 예시  
+```
+static void copy(String src, String dst) throws IOException {
+    try(InputStream in = new FileInputStream(src);
+        OutputStream out = new FileOutputStream(dst)) {
+        ...
+    }
+}
+```
+
+* catch 절을 사용하여 다수의 예외를 처리하도록 사용할 수 있다.   
+```
+static void copy(String src, String dst) {
+    try(InputStream in = new FileInputStream(src);
+        OutputStream out = new FileOutputStream(dst)) {
+        ...
+    } catch(IOException e) {
+        return defaultVal;
+    }
+}
+
+```   
 # 아이템 14. Comparable 구현을 고려하라  
 (Effective Java 내용 정리 필요)  
 
