@@ -9,6 +9,7 @@
 * [아이템 07. 다 쓴 객체 참조를 해제하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-07-%EB%8B%A4-%EC%93%B4-%EA%B0%9D%EC%B2%B4-%EC%B0%B8%EC%A1%B0%EB%A5%BC-%ED%95%B4%EC%A0%9C%ED%95%98%EB%9D%BC)  
 * [아이템 08. finalizer 와 cleaner 사용을 피하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-08-finalizer-%EC%99%80-cleaner-%EC%82%AC%EC%9A%A9%EC%9D%84-%ED%94%BC%ED%95%98%EB%9D%BC)    
 * [아이템 09. try-finally 보다는 try-with-resources를 사용하라](https://github.com/yeoseon/book__effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-09-try-finally-%EB%B3%B4%EB%8B%A4%EB%8A%94-try-with-resources%EB%A5%BC-%EC%82%AC%EC%9A%A9%ED%95%98%EB%9D%BC)  
+* [아이템 10. equals는 일반 규약을 지켜 재정의하라]()  
 * [아이템 14. Comparable 구현을 고려하라](https://github.com/yeoseon/effective-java#%EC%95%84%EC%9D%B4%ED%85%9C-14-comparable-%EA%B5%AC%ED%98%84%EC%9D%84-%EA%B3%A0%EB%A0%A4%ED%95%98%EB%9D%BC)  
 * [아이템 17. 변경 가능성을 최소화하라.](https://github.com/yeoseon/book__effective-java/blob/master/README.md#%EC%95%84%EC%9D%B4%ED%85%9C-17-%EB%B3%80%EA%B2%BD-%EA%B0%80%EB%8A%A5%EC%84%B1%EC%9D%84-%EC%B5%9C%EC%86%8C%ED%99%94%ED%95%98%EB%9D%BC)  
 * [아이템 34. int 상수 대신 열거 타입을 사용해라](https://github.com/yeoseon/effective-java#int-%EC%83%81%EC%88%98-%EB%8C%80%EC%8B%A0-%EC%97%B4%EA%B1%B0-%ED%83%80%EC%9E%85%EC%9D%84-%EC%82%AC%EC%9A%A9%ED%95%B4%EB%9D%BC)  
@@ -622,8 +623,172 @@ static void copy(String src, String dst) {
         return defaultVal;
     }
 }
+```
 
+# 아이템 10. equals는 일반 규약을 지켜 재정의하라  
+
+## 다음의 경우 되도록 재정의 하지 않는다.  
+
+1. 각 인스턴스가 본질적으로 고유하다  
+값을 표현하는 것이 아니라 동작하는 개체를 표현하는 클래스가 여기에 해당한다.  
+Thread 클래스가 좋은 예이다.  
+2. '논리적 동치성'을 검사할 일이 없다.  
+Pattern 객체의 경우 굳이 정규식이 같은지 여부를 검사할 필요가 없다.  
+3. 상위 클래스에서 재정의한 equals가 하위 클래스에도 들어맞는다.  
+Set, Map 등의 Collection 객체는 Abstract- 객체의 equals를 상속받아 사용하고 있다.  
+4. 클래스가 private이거나 package-private이고, equals를 호출할 일이 없다.  
+위험을 피하고 싶으면 Assert 로직을 추가해라.  
+
+## equals를 재정의 해야할 때  
+
+1. 논리적 동치성을 확인해야 하는데, 상위 클래스가 논리적 동치성을 비교하도록 제공하지 않는 경우  
+Integer나 String과 같은 값 클래스가 그 예이다.  
+값 클래스라고 해도 값이 같은 인스턴스가 둘 이상 만들어지지 않음을 보장하는 Enum과 같은 클래스는 재정의 하지 않아도 된다.  
+값을 비교하는 equals를 정의하면 Map의 키와 Set의 원소로 활용할 수 있다.  
+
+## equals 정의에 대한 일반 규약  
+
+### 반사성
+```
+x.equals(x)는 true여야 한다.  
+``` 
+* 나는 나와 같아야 한다.  
+* 어기기 힘든 규약  
+* contains가 통해 확인할 수 있다.    
+
+### 대칭성 
+```
+x.equals(y) = true 이면 y.equals(x)도 true여야 한다.  
+```
+* 서로에 대한 동치여부에 똑같이 답해야 한다.  
+* equals 규약을 어기면 그 객체를 사용하는 다른 객체들이 어떻게 반응할 지 알 수 없다. (contains 등)  
+
+### 추이성  
+```
+x.equals(y)가 true이고 y.equals(z)가 true이면 x.equals(z)도 true여야 한다.  
+```
+#### 대표적 예시: 상위 클래스에 없는 필드를 추가하여 하위 클래스로 확장한 경우  
+* Point 객체에 color 필드를 추가하여 ColorPoint 객체 생성  
+```
+public class ColorPoint extends Point {
+    private final Color color;
+
+    public ColorPoint(int x, int y, Color color) {
+        super(x, y);
+        this.color = color;
+    }
+}
+```
+* Point의 equals 구현이 상속되어 색상의 정보는 비교한 채 수행한다. equals를 구현해야 한다.  
+* **구체 클래스를 확장해서 새로운 값을 추가하면서 equals 규약을 만족시킬 방법은 존재하지 않는다.**  
+
+#### 해결: 상속 대신 컴포지션을 사용하라 (아이템 18 참고)  
+```
+리스코프 치환법칙: 어떤 타입에 있어 중요한 속성이라면 그 하위 타입에서도 마찬가지로 중요하다.  
+= Point 하위 클래스는 정의상 여전히 Point 클래스이므로 어디서든 Point로 활용될 수 있어야 한다.
 ```   
+* Point를 상속하는 대신 Point를 ColorPoint의 private 필드로 두고, ColorPoint와 같은 위치의 일반 Point를 반환하는 뷰 메서드(아이템 6 참고)를 추가하는 식  
+```
+public class ColorPoint {
+    private final Point point;
+    private final Color color;
+
+    public ColorPoint(intx, inty, Color color) {
+        point = new Point(x, y);
+        this.color = Objects.requiredNonNull(color);
+    }
+
+    public Point asPoint() {
+         return point;
+    }
+    
+    @Override 
+    public boolean equals(Object o) {
+        if(!(o instanceof ColorPoint)) {
+            return false;
+        }
+        ColorPoint cp = (ColorPoint) o;
+        return cp.point.equals(point) && cp.color.equals(color);
+    }
+}
+```
+
+#### 주의: 자바에서 제공하는 클래스에도 값을 추가한 클래스가 종종 있다.  
+
+* java.sql.Timestamp는 java.util.Date를 확장한 후 nanoseconds 필드를 추가했다.  
+    * 이 때문에 대칭성을 위배하여 한 컬렉션에 넣거나 서로 섞어 사용하면 안된다.  
+
+### 일관성  
+```
+x.equals(y)는 항상 일관적으로 true이거나 false를 반환해야 한다.  
+```
+
+* 두 객체가 같다면 앞으로도 영원히 같아야 한다.  
+* 가변 객체는 비교 시점에 따라 서로 다를 수도 있지만 불변 객체는 한번 다르면 끝까지 달라야 한다.  
+* 불변이든 가변이든 **equals 판단에 신뢰할 수 없는 자원이 끼어서는 않된다.**  
+    * java.net.URL의 경우는 네트워크마다 다를 수 있는 IP 정보를 이용해서 비교한다.  
+    * 절대 사용하면 안된다.  
+    * 이런 문제를 피하려면 equals는 항시 메모리에 존재하는 객체만을 사용한 결정적 계산만 수행해야 한다.  
+   
+### null-아님  
+```
+x.equals(null)은 항상 false이다.  
+```
+* 모든 객체는 null과 같지 않아야 한다.  
+* 다음과 같이 확인하는 로직을 넣을 수 있지만 불필요하다.  
+    ```
+        if(o == null) return false;
+    ```
+* instanceof 연산자로 검사할 때, 두번째 피연산자와 무관하게 첫번째 피연산자가 null이면 무조건 false를 반환하기 때문이다.  
+```
+if(!(o instanceof MyType)) return false;
+```
+
+## 일반규약을 통해 나온 좋은 equals 구현법  
+
+### 1. == 연산자를 이용해 입력이 자기 자신의 참조인지 확인한다.  
+* 단순 성능 최적화 용으로 비교작업이 복잡할 때 값어치를 할 것이다.  
+### 2. instanceof 연산자로 입력이 올바른 타입인지 확인한다.  
+### 3. 입력을 올바른 타입으로 형변환 한다.  
+* instanceof를 통과했다면 100% 성공한다.  
+### 4. 입력객체와 자기 자신의 대응되는 핵심 필드들이 모두 일치하는지 하나씩 검사한다.  
+* 하나라도 다르면 false를 반환한다.  
+
+## 자료형에 따른 동치성 비교법  
+
+* 기본타입 필드(float, double 제외): ==
+* 참조 타입 필드는 equals 메서드  
+* float와 double은 각각 정적 메서드인 compare로 비교
+    * equals도 가능하지만 오토박싱을 수반하여 성능에 좋지 않다.  
+* null을 정상값으로 취급하는 참조타입 필드의 경우 Objects.equals()를 통해 NPE를 방지하자.  
+
+## 어떤 필드를 먼저 비교하느냐가 성능을 좌우한다.  
+* 다를 가능성이 더 크거나 비교하는 비용이 싼 필드를 먼저 비교하자.  
+* 객체의 논리적 상태와 관련 없는 필드는 비교하면 안된다.  
+* 핵심필드로 부터 계산되는 파생필드도 비교할 필요는 없지만 더 빠를 때도 있다.  
+    * 객체 전체의 상태를 대표하는 경우  
+    * 자신의 영역을 캐시해주는 클래스의 경우 캐시된 값으로 비교하면 빠르다.  
+
+## equals를 다 작성했다면 ...
+  
+* 대칭적인가? 추이성이 있는가? 일관적인가? 를 테스트하자.  
+* 단위 테스트를 통해 상세히 비교하자.  
+* 오픈 소스인 AutoValue르 이용해 작성했다면 단위테스트할 필요는 없을 것이다.  
+
+## equals 작성시 주의사항  
+
+### 1. equsl를 재정의할 땐 hashcode도 반드시 재정의 하자 (아이템 11 참고)  
+### 2. 너무 복잡하게 해결하려 들지 말자.  
+* 필드들의 동치성만 검사해도 충분하다. 
+### 3. Object 외의 타입을 매개변수도 받는 equals 메서드는 선언하지 말자.  
+* 이는 재정의가 아니라 다중정의로 처리된다.  
+* @Override를 일관되게 사용한다면 컴파일 단에서 잡힐 것이다.  
+
+## 편리한 equals 작성을 도와주는 AutoValue 프레임워크  
+
+IDE에서 제공하는 자동 작성 기능을 깔끔하지 않다.  
+       
+  
 # 아이템 14. Comparable 구현을 고려하라  
 (Effective Java 내용 정리 필요)  
 
