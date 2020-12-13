@@ -12,7 +12,7 @@
 * [아이템 10. equals는 일반 규약을 지켜 재정의하라](#%EC%95%84%EC%9D%B4%ED%85%9C-10-equals%EB%8A%94-%EC%9D%BC%EB%B0%98-%EA%B7%9C%EC%95%BD%EC%9D%84-%EC%A7%80%EC%BC%9C-%EC%9E%AC%EC%A0%95%EC%9D%98%ED%95%98%EB%9D%BC)  
 * [아이템 14. Comparable 구현을 고려하라](#%EC%95%84%EC%9D%B4%ED%85%9C-14-comparable-%EA%B5%AC%ED%98%84%EC%9D%84-%EA%B3%A0%EB%A0%A4%ED%95%98%EB%9D%BC)  
 * [아이템 17. 변경 가능성을 최소화하라.](#%EC%95%84%EC%9D%B4%ED%85%9C-17-%EB%B3%80%EA%B2%BD-%EA%B0%80%EB%8A%A5%EC%84%B1%EC%9D%84-%EC%B5%9C%EC%86%8C%ED%99%94%ED%95%98%EB%9D%BC)  
-* [아이템 34. int 상수 대신 열거 타입을 사용해라](#int-%EC%83%81%EC%88%98-%EB%8C%80%EC%8B%A0-%EC%97%B4%EA%B1%B0-%ED%83%80%EC%9E%85%EC%9D%84-%EC%82%AC%EC%9A%A9%ED%95%B4%EB%9D%BC)  
+* [아이템 34. int 상수 대신 열거 타입을 사용해라](#아이템-34-int-상수-대신-열거-타입을-사용해라)  
 * [아이템 50. 적시에 방어적 복사본을 만들라](#%EC%95%84%EC%9D%B4%ED%85%9C-50%EC%A0%81%EC%8B%9C%EC%97%90-%EB%B0%A9%EC%96%B4%EC%A0%81-%EB%B3%B5%EC%82%AC%EB%B3%B8%EC%9D%84-%EB%A7%8C%EB%93%A4%EB%9D%BC)  
 * [아이템 72. 표준 예외를 사용하라](#%EC%95%84%EC%9D%B4%ED%85%9C-72-%ED%91%9C%EC%A4%80-%EC%98%88%EC%99%B8%EB%A5%BC-%EC%82%AC%EC%9A%A9%ED%95%98%EB%9D%BC) 
 
